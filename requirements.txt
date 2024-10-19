@@ -1,0 +1,6 @@
+Flask
+psycopg
+Flask-RESTful
+PyJWT
+Flask-SQLAlchemy
+Flask-Session
