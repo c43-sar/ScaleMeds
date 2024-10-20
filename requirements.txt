@@ -1,6 +1,6 @@
-Flask
-psycopg
-Flask-RESTful
-PyJWT
-Flask-SQLAlchemy
-Flask-Session
+Flask=3.0.3
+psycopg=3.2.3
+Flask-RESTful=0.3.10
+PyJWT==2.9.0
+Flask-SQLAlchemy=3.1.1
+Flask-Session=0.8.0
