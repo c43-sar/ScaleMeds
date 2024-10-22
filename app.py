@@ -83,6 +83,31 @@ def token_required(f):
 def home_page():
     return render_template("index.html")
 
+@app.route("/register")
+def reg_user():
+    return render_template("register.html")
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    data = request.form
+    name, email = data.get("name"), data.get("email")
+    pwd = data.get("pwd")
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(
+            user_id=str(uuid.uuid4()),
+            user_name=name,
+            email=email,
+            password=hl.sha512(pwd.encode()).hexdigest(),
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        return make_response("Successfully registered.", 201)
+    else:
+        return make_response("User already exists. Please Log in.", 202)
+
 
 @app.route("/authorise", methods=["POST"])
 def user_auth():
