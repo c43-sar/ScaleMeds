@@ -83,9 +83,11 @@ def token_required(f):
 def home_page():
     return render_template("index.html")
 
+
 @app.route("/register")
 def reg_user():
     return render_template("register.html")
+
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -101,7 +103,7 @@ def signup():
             email=email,
             password=hl.sha512(pwd.encode()).hexdigest(),
         )
-        
+
         db.session.add(user)
         db.session.commit()
         return make_response("Successfully registered.", 201)
@@ -111,9 +113,13 @@ def signup():
 
 @app.route("/authorise", methods=["POST"])
 def user_auth():
-    uname = str(request.form["uname"])
-    pwd_hash = str(request.form["pwd"])
-    return str(len(hl.sha512(pwd_hash.encode()).hexdigest()))
+    email = str(request.form["uname"])
+    pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return "User does NOT exist. Register here"
+    if user.password == pwd_hash:
+        return "Hello, " + user.user_name
 
 
 if __name__ == "__main__":
