@@ -55,30 +55,30 @@ class Meds(db.Model):
     time_mins = db.Column(db.Integer)
 
 
-# JWT
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
+# # JWT
+# def token_required(f):
+#     @wraps(f)
+#     def decorated(*args, **kwargs):
+#         token = None
 
-        if "x-access-token" in request.headers:
-            token = request.headers["x-access-token"]
+#         if "x-access-token" in request.headers:
+#             token = request.headers["x-access-token"]
 
-        if not token:
-            return jsonify({"message": "Error: Forbidden (No Token Found)"}), 401
+#         if not token:
+#             return jsonify({"message": "Error: Forbidden (No Token Found)"}), 401
 
-        try:
-            data = jwt.decode(token, app.config["SECRET_KEY"])
-            current_user = User.query.filter_by(user_id=data["user_id"]).first()
-        except:
-            return (
-                jsonify({"message": "Error: Forbidden (Invalid Token or Header)"}),
-                401,
-            )
+#         try:
+#             data = jwt.decode(token, app.config["SECRET_KEY"])
+#             current_user = User.query.filter_by(user_id=data["user_id"]).first()
+#         except:
+#             return (
+#                 jsonify({"message": "Error: Forbidden (Invalid Token or Header)"}),
+#                 401,
+#             )
 
-        return f(current_user, *args, **kwargs)
+#         return f(current_user, *args, **kwargs)
 
-    return decorated
+#     return decorated
 
 
 @app.route("/")
