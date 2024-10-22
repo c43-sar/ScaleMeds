@@ -83,6 +83,8 @@ def token_required(f):
 
 @app.route("/")
 def home_page():
+    if session.get("auth_token"):
+        return redirect("/dashboard")
     return render_template("index.html")
 
 
@@ -150,7 +152,7 @@ def user_auth():
 
 @app.route("/dashboard")
 def user_dash():
-    if not session["auth_token"]:
+    if not session.get("auth_token"):
         return redirect("/")
     user_token = session.get("auth_token")
     try:
@@ -162,7 +164,7 @@ def user_dash():
         )
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
-        return "Hello, " + user.user_name
+        return render_template("dash.html", user_full_name = user.full_name)
     except:
         return "Error. Try Login again."
 
