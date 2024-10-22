@@ -9,7 +9,7 @@ from flask import (
 )
 from flask_session import Session
 import hashlib as hl
-import json, uuid
+import json, uuid, re
 from flask_sqlalchemy import SQLAlchemy
 import jwt
 from datetime import datetime, timedelta
@@ -34,18 +34,20 @@ migrate = Migrate(app, db)
 
 
 # ORM Models
+# On Updation/changes, run `flask db migrate -m "Messages"` and `flask db upgrade`
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(32), unique=True)
     user_name = db.Column(db.String(64))
-    email = db.Column(db.String(70), unique=True)
+    full_name = db.Column(db.String(70), unique=True)
     password = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, unique=False, default=False)
 
 
 class Meds(db.Model):
     meds_id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    users_id = db.Column(db.Integer, db.ForeignKey("users.user_id"))
     master_id = db.Column(db.String(64))
     slave_id = db.Column(db.String(3))
     pill_select = db.Column(db.Integer)
@@ -92,16 +94,30 @@ def reg_user():
 @app.route("/signup", methods=["POST"])
 def signup():
     data = request.form
-    name, email = data.get("name"), data.get("email")
+    name, uname = data.get("name"), data.get("uname")
     pwd = data.get("pwd")
+    regex_obj = re.compile("[a-z0-9]{5,15}")
+    regex_res = regex_obj.fullmatch(uname)
 
-    user = User.query.filter_by(email=email).first()
+    if not regex_res or len(pwd) < 8:
+        return make_response(
+            "Invalid username or password pattern. Form likely bypassed or compromised.",
+            406
+        )
+    
+    admin_reqd = False
+    admins = User.query.filter_by(is_admin=True).first()
+    if not admins:
+        admin_reqd = True
+    
+    user = User.query.filter_by(user_name=uname).first()
     if not user:
         user = User(
             user_id=str(uuid.uuid4()),
-            user_name=name,
-            email=email,
+            full_name=name,
+            user_name=uname,
             password=hl.sha512(pwd.encode()).hexdigest(),
+            is_admin=admin_reqd
         )
 
         db.session.add(user)
@@ -113,9 +129,9 @@ def signup():
 
 @app.route("/authorise", methods=["POST"])
 def user_auth():
-    email = str(request.form["uname"])
+    uname = str(request.form["uname"])
     pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(user_name=uname).first()
     if not user:
         return "User does NOT exist. Register here"
     if user.password == pwd_hash:
@@ -127,9 +143,9 @@ def user_auth():
             app.config["SECRET_KEY"],
             algorithm="HS256",
         )
-        # auth_token = auth_token.encode("utf-8")
         session["auth_token"] = auth_token
         return redirect("/dashboard")
+    return redirect("/")
 
 
 @app.route("/dashboard")
@@ -148,7 +164,7 @@ def user_dash():
         user = User.query.filter_by(user_id=user_id).first()
         return "Hello, " + user.user_name
     except:
-        return "Error"
+        return "Error. Try Login again."
 
 
 if __name__ == "__main__":

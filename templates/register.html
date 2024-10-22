@@ -13,15 +13,20 @@
         </label>
       </p>
       <p>
-        <label for="email"
-          >E-Mail:&nbsp;
-          <input type="email" name="email" />
+        <label for="uname"
+          >Username:&nbsp;
+          <input
+            type="text"
+            name="uname"
+            pattern="[a-z0-9._]{5,15}"
+            placeholder="Username"
+          />
         </label>
       </p>
       <p>
         <label for="pwd"
           >Password:&nbsp;
-          <input type="password" name="pwd" />
+          <input type="password" name="pwd" pattern=".{8,}" />
         </label>
       </p>
       <br />
