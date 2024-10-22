@@ -119,7 +119,36 @@ def user_auth():
     if not user:
         return "User does NOT exist. Register here"
     if user.password == pwd_hash:
+        auth_token = jwt.encode(
+            {
+                "user_id": user.user_id,
+                "exp": datetime.utcnow() + timedelta(hours=1),
+            },
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+        # auth_token = auth_token.encode("utf-8")
+        session["auth_token"] = auth_token
+        return redirect("/dashboard")
+
+
+@app.route("/dashboard")
+def user_dash():
+    if not session["auth_token"]:
+        return redirect("/")
+    user_token = session.get("auth_token")
+    try:
+        user_token = jwt.decode(
+            user_token,
+            app.config["SECRET_KEY"],
+            options={"require": ["exp"]},
+            algorithms=["HS256"],
+        )
+        user_id = user_token["user_id"]
+        user = User.query.filter_by(user_id=user_id).first()
         return "Hello, " + user.user_name
+    except:
+        return "Error"
 
 
 if __name__ == "__main__":
