@@ -5,17 +5,17 @@
   </head>
   <body>
     <h1>Please Enter Credentials</h1>
-    <form action="/authorise" method="post">
+    <form action="/authorise" method="post" autocomplete="off">
       <p>
         <label for="uname"
           >Username:&nbsp;
-          <input type="text" name="uname" required />
+          <input type="text" name="uname" required placeholder="Username" />
         </label>
       </p>
       <p>
         <label for="pwd"
           >Password:&nbsp;
-          <input type="password" name="pwd" required />
+          <input type="password" name="pwd" required placeholder="Password" />
         </label>
       </p>
       <br />

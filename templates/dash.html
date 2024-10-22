@@ -7,6 +7,13 @@
     <nav>
         <h3>Hello, {{user_full_name}}</h3>
     </nav>
-    
+    <main>
+        <h3>List of meds</h3>
+        <form action="/editmeds" method="post">
+            {{meds_radio_list}}
+            <button type="submit">Edit</button>
+        </form>
+        <a href="/addmeds">Add Medications</a>
+    </main>
   </body>
 </html>
