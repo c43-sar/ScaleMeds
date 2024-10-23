@@ -6,11 +6,14 @@
   <body>
     <nav>
         <h3>Hello, {{user_full_name}}</h3>
+        <a href="/signout">Logout</a>
     </nav>
     <main>
         <h3>List of meds</h3>
         <form action="/editmeds" method="post">
-            {{meds_radio_list}}
+            {% for i in range(len(meds_list))%}
+              <input type="radio" />{meds_list[i]} <br />
+            {% endfor %}
             <button type="submit">Edit</button>
         </form>
         <a href="/addmeds">Add Medications</a>

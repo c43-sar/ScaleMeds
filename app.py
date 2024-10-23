@@ -83,14 +83,27 @@ class Meds(db.Model):
 
 @app.route("/")
 def home_page():
+    if len(User.all()) == 0:
+        return redirect("/register")
     if session.get("auth_token"):
         return redirect("/dashboard")
-    return render_template("index.html")
+    return render_template("index.html", message="")
+
+
+@app.route("/login")
+def user_signin():
+    return render_template("index.html", message="You have been logged out. Please login to use the app.")
 
 
 @app.route("/register")
 def reg_user():
     return render_template("register.html")
+
+
+@app.route("/signout")
+def user_session_delete():
+    session["auth_token"] = None
+    return redirect("/login")
 
 
 @app.route("/signup", methods=["POST"])
@@ -104,14 +117,14 @@ def signup():
     if not regex_res or len(pwd) < 8:
         return make_response(
             "Invalid username or password pattern. Form likely bypassed or compromised.",
-            406
+            406,
         )
-    
+
     admin_reqd = False
     admins = User.query.filter_by(is_admin=True).first()
     if not admins:
         admin_reqd = True
-    
+
     user = User.query.filter_by(user_name=uname).first()
     if not user:
         user = User(
@@ -119,14 +132,14 @@ def signup():
             full_name=name,
             user_name=uname,
             password=hl.sha512(pwd.encode()).hexdigest(),
-            is_admin=admin_reqd
+            is_admin=admin_reqd,
         )
 
         db.session.add(user)
         db.session.commit()
-        return make_response("Successfully registered.", 201)
+        return render_template("index.html", message="Account created successfully. Please Log in.")
     else:
-        return make_response("User already exists. Please Log in.", 202)
+        return render_template("index.html", message="User already exists. Please Log in.")
 
 
 @app.route("/authorise", methods=["POST"])
@@ -135,7 +148,7 @@ def user_auth():
     pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
     user = User.query.filter_by(user_name=uname).first()
     if not user:
-        return "User does NOT exist. Register here"
+        return render_template("index.html", message="Wrong username or user does not exist.")
     if user.password == pwd_hash:
         auth_token = jwt.encode(
             {
@@ -147,7 +160,7 @@ def user_auth():
         )
         session["auth_token"] = auth_token
         return redirect("/dashboard")
-    return redirect("/")
+    return render_template("index.html", message="Wrong username and password combination.")
 
 
 @app.route("/dashboard")
@@ -164,9 +177,10 @@ def user_dash():
         )
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
-        return render_template("dash.html", user_full_name = user.full_name)
+        print(Meds.all())
+        return render_template("dash.html", user_full_name=user.full_name, meds_list = Meds.all())
     except:
-        return "Error. Try Login again."
+        return redirect("/signout")
 
 
 if __name__ == "__main__":
