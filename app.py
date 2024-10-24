@@ -66,6 +66,32 @@ class Device(db.Model):
     master_id = db.Column(db.String(64), unique=True)
 
 
+def get_master_id(session=None):
+    if not session or not session.get("auth_token"):
+        return False
+    user_token = session.get("auth_token")
+    try:
+        user_token = jwt.decode(
+            user_token,
+            app.config["SECRET_KEY"],
+            options={"require": ["exp"]},
+            algorithms=["HS256"],
+        )
+        user_id = user_token["user_id"]
+        user = User.query.filter_by(user_id=user_id).first()
+
+        if not user:
+            return False
+
+        device = Device.query.filter_by(user_id=user_id).first()
+        if not device:
+            return False
+
+        return device.master_id
+
+    except:
+        return redirect("/signout")
+
 @app.route("/")
 def home_page():
     if len(User.all()) == 0:
@@ -177,8 +203,8 @@ def user_dash():
         if not user:
             return redirect("/signout")
 
-        master_id = Device.query.filter_by(user_id=user_id).first()
-        if not master_id and user.is_admin == False:
+        device = Device.query.filter_by(user_id=user_id).first()
+        if not device and user.is_admin == False:
             return redirect("/register_device")
 
         return render_template(
@@ -271,7 +297,7 @@ def user_add_meds():
             time_hours=time_hrs,
             time_mins=time_mins,
         )
-        
+
         db.session.add(med)
         db.session.commit()
         return redirect("/dash")
