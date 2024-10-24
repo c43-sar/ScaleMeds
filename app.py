@@ -236,14 +236,33 @@ def user_add_meds_page():
 
 @app.route("/submitmeds")
 def user_add_meds():
+    if not session.get("auth_token"):
+        return redirect("/")
+    user_token = session.get("auth_token")
+
     try:
+        user_token = jwt.decode(
+            user_token,
+            app.config["SECRET_KEY"],
+            options={"require": ["exp"]},
+            algorithms=["HS256"],
+        )
+        user_id = user_token["user_id"]
+        user = User.query.filter_by(user_id=user_id).first()
+
+        if not user:
+            return redirect("/signout")
+        
         slave_id = int(request.form.get("slave_id"))
         slave_id = str(hex(slave_id)[2:])
         patient = request.form.get("patient")
         pill_select = int(request.form.get("pill_select"))
         time_hrs = int(request.form.get("time_hrs"))
         time_mins = int(request.form.get("time_mins"))
-        master_id = "REPLACE ME"
+
+        device = Device.query.filter_by(user_id=user_id)
+        master_id = device.master_id
+
         med = Meds(
             master_id=master_id,
             patient_name=patient,
@@ -252,9 +271,10 @@ def user_add_meds():
             time_hours=time_hrs,
             time_mins=time_mins,
         )
+        
         db.session.add(med)
         db.session.commit()
-        return "Added Successfully"
+        return redirect("/dash")
     except:
         return "Failed to add"
 
