@@ -49,17 +49,21 @@ class Meds(db.Model):
     __tablename__ = "meds"
     meds_id = db.Column(db.Integer, primary_key=True)
     # users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"))
-    master_id = db.Column(db.String(32),  db.ForeignKey("devices.master_id"), unique=True)
+    master_id = db.Column(
+        db.String(32), db.ForeignKey("devices.master_id"), unique=True
+    )
     patient_name = db.Column(db.String(64))
     slave_id = db.Column(db.String(2))
     pill_select = db.Column(db.Integer)
     time_hours = db.Column(db.Integer)
     time_mins = db.Column(db.Integer)
 
+
 class Device(db.Model):
     __tablename__ = "devices"
     users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"), unique=True)
-    master_id = db.Column(db.String(32), unique = True)
+    master_id = db.Column(db.String(32), unique=True)
+
 
 # # JWT
 # def token_required(f):
@@ -98,7 +102,9 @@ def home_page():
 
 @app.route("/login")
 def user_signin():
-    return render_template("index.html", message="You have been logged out. Please login to use the app.")
+    return render_template(
+        "index.html", message="You have been logged out. Please login to use the app."
+    )
 
 
 @app.route("/register")
@@ -143,9 +149,13 @@ def signup():
 
         db.session.add(user)
         db.session.commit()
-        return render_template("index.html", message="Account created successfully. Please Log in.")
+        return render_template(
+            "index.html", message="Account created successfully. Please Log in."
+        )
     else:
-        return render_template("index.html", message="User already exists. Please Log in.")
+        return render_template(
+            "index.html", message="User already exists. Please Log in."
+        )
 
 
 @app.route("/authorise", methods=["POST"])
@@ -154,7 +164,9 @@ def user_auth():
     pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
     user = User.query.filter_by(user_name=uname).first()
     if not user:
-        return render_template("index.html", message="Wrong username or user does not exist.")
+        return render_template(
+            "index.html", message="Wrong username or user does not exist."
+        )
     if user.password == pwd_hash:
         auth_token = jwt.encode(
             {
@@ -166,7 +178,9 @@ def user_auth():
         )
         session["auth_token"] = auth_token
         return redirect("/dashboard")
-    return render_template("index.html", message="Wrong username and password combination.")
+    return render_template(
+        "index.html", message="Wrong username and password combination."
+    )
 
 
 @app.route("/dashboard")
@@ -184,9 +198,41 @@ def user_dash():
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
         print(Meds.all())
-        return render_template("dash.html", user_full_name=user.full_name, meds_list = Meds.all())
+        return render_template(
+            "dash.html", user_full_name=user.full_name, meds_list=Meds.all()
+        )
     except:
         return redirect("/signout")
+
+
+@app.route("/addmeds")
+def user_add_meds_page():
+    render_template("addmeds.html", master_id="Under Constuction")
+
+
+@app.route("/submitmeds")
+def user_add_meds():
+    try:
+        slave_id = int(request.form.get("slave_id"))
+        slave_id = str(hex(slave_id)[2:])
+        patient = request.form.get("patient")
+        pill_select = int(request.form.get("pill_select"))
+        time_hrs = int(request.form.get("time_hrs"))
+        time_mins = int(request.form.get("time_mins"))
+        master_id = "REPLACE ME"
+        med = Meds(
+            master_id=master_id,
+            patient_name=patient,
+            slave_id=slave_id,
+            pill_select=pill_select,
+            time_hours=time_hrs,
+            time_mins=time_mins,
+        )
+        db.session.add(med)
+        db.session.commit()
+        return "Added Successfully"
+    except:
+        return "Failed to add"
 
 
 if __name__ == "__main__":
