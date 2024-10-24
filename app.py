@@ -39,7 +39,7 @@ class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(36), unique=True)
-    user_name = db.Column(db.String(64))
+    user_name = db.Column(db.String(64), unique=True)
     full_name = db.Column(db.String(70), unique=True)
     password = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, unique=False, default=False)
@@ -50,7 +50,7 @@ class Meds(db.Model):
     meds_id = db.Column(db.Integer, primary_key=True)
     # users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"))
     master_id = db.Column(
-        db.String(32), db.ForeignKey("devices.master_id"), unique=True
+        db.String(64), db.ForeignKey("devices.master_id"), unique=True
     )
     patient_name = db.Column(db.String(64))
     slave_id = db.Column(db.String(2))
@@ -61,34 +61,9 @@ class Meds(db.Model):
 
 class Device(db.Model):
     __tablename__ = "devices"
-    users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"), unique=True)
-    master_id = db.Column(db.String(32), unique=True)
-
-
-# # JWT
-# def token_required(f):
-#     @wraps(f)
-#     def decorated(*args, **kwargs):
-#         token = None
-
-#         if "x-access-token" in request.headers:
-#             token = request.headers["x-access-token"]
-
-#         if not token:
-#             return jsonify({"message": "Error: Forbidden (No Token Found)"}), 401
-
-#         try:
-#             data = jwt.decode(token, app.config["SECRET_KEY"])
-#             current_user = User.query.filter_by(user_id=data["user_id"]).first()
-#         except:
-#             return (
-#                 jsonify({"message": "Error: Forbidden (Invalid Token or Header)"}),
-#                 401,
-#             )
-
-#         return f(current_user, *args, **kwargs)
-
-#     return decorated
+    dev_no = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), db.ForeignKey("users.user_id"), unique=True)
+    master_id = db.Column(db.String(64), unique=True)
 
 
 @app.route("/")
@@ -198,9 +173,58 @@ def user_dash():
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
         print(Meds.all())
+
+        if not user:
+            return redirect("/signout")
+
+        master_id = Device.query.filter_by(user_id=user_id).first()
+        if not master_id and user.is_admin == False:
+            return redirect("/register_device")
+
         return render_template(
             "dash.html", user_full_name=user.full_name, meds_list=Meds.all()
         )
+
+    except:
+        return redirect("/signout")
+
+
+@app.route("/register_device")
+def dev_reg_page():
+    return render_template("newdevice.html")
+
+
+@app.route("/device_reg_update")
+def dev_reg():
+    if not session.get("auth_token"):
+        return redirect("/")
+    user_token = session.get("auth_token")
+    try:
+        user_token = jwt.decode(
+            user_token,
+            app.config["SECRET_KEY"],
+            options={"require": ["exp"]},
+            algorithms=["HS256"],
+        )
+        user_id = user_token["user_id"]
+        user = User.query.filter_by(user_id=user_id).first()
+
+        if not user:
+            return redirect("/signout")
+
+        master_id = ""
+        for i in range(0, 8):
+            master_id += request.form.get(str("id_pt_" + str(i)))
+
+        existing_device = Device.query.filter_by(user_id=user_id)
+        if not existing_device:
+            new_device = Device(user_id=user_id, master_id=master_id)
+            db.session.add(new_device)
+            return redirect("/dash")
+
+        existing_device.master_id = master_id
+        return redirect("/dash")
+
     except:
         return redirect("/signout")
 
