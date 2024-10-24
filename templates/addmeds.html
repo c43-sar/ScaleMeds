@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ScaleMeds Add Medications</title>
+  </head>
+  <body>
+    <h1>Add Medication</h1>
+    <form action="/submitmeds" method="post" autocomplete="off">
+      <p>
+        Client Master Device ID:&nbsp;
+        <input type="text" disabled value="{{master_id}}" />
+      </p>
+      <p>
+        <label for="slave_id"
+          >Slave Node ID/Bed Number:&nbsp;
+          <input type="number" name="slave_id" min="0" max="127" required/>
+        </label>
+      </p>
+      <p>
+        <label for="pill_select"
+          >Pill Number:&nbsp;
+          <input type="number" name="pill_select" min="1" max="4" required/>
+        </label>
+      </p>
+      <p>
+        <label for="time_hours"
+          >Hours:&nbsp;
+          <input type="number" name="time_hours" min="0" max="23" required/>
+        </label>
+      </p>
+      <p>
+        <label for="time_mins"
+          >Mins:&nbsp;
+          <input type="number" name="time_mins" min="0" max="59" required/>
+        </label>
+      </p>
+      <br />
+      <button type="submit">Add Medication</button>
+    </form>
+  </body>
+</html>

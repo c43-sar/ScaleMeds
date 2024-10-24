@@ -38,7 +38,7 @@ migrate = Migrate(app, db)
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(32), unique=True)
+    user_id = db.Column(db.String(36), unique=True)
     user_name = db.Column(db.String(64))
     full_name = db.Column(db.String(70), unique=True)
     password = db.Column(db.String(128))
@@ -46,14 +46,20 @@ class User(db.Model):
 
 
 class Meds(db.Model):
+    __tablename__ = "meds"
     meds_id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Integer, db.ForeignKey("users.user_id"))
-    master_id = db.Column(db.String(64))
-    slave_id = db.Column(db.String(3))
+    # users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"))
+    master_id = db.Column(db.String(32),  db.ForeignKey("devices.master_id"), unique=True)
+    patient_name = db.Column(db.String(64))
+    slave_id = db.Column(db.String(2))
     pill_select = db.Column(db.Integer)
     time_hours = db.Column(db.Integer)
     time_mins = db.Column(db.Integer)
 
+class Device(db.Model):
+    __tablename__ = "devices"
+    users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"), unique=True)
+    master_id = db.Column(db.String(32), unique = True)
 
 # # JWT
 # def token_required(f):
