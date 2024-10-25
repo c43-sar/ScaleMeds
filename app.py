@@ -66,7 +66,7 @@ class Device(db.Model):
     master_id = db.Column(db.String(64), unique=True)
 
 
-def get_master_id(session=None):
+def get_user(session=None):
     if not session or not session.get("auth_token"):
         return False
     user_token = session.get("auth_token")
@@ -79,18 +79,27 @@ def get_master_id(session=None):
         )
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
-
-        if not user:
-            return False
-
-        device = Device.query.filter_by(user_id=user_id).first()
-        if not device:
-            return False
-
-        return device.master_id
-
+        return user
     except:
-        return redirect("/signout")
+        return False
+
+
+def get_user_id(session=None):
+    x = get_user(session=session)
+    if not x:
+        return None
+    return x.user_id
+
+
+def get_master_id(session=None):
+    user_id = get_user_id(session=session)
+    if not user_id:
+        return None
+    device = Device.query.filter_by(user_id=user_id).first()
+    if not device:
+        return True
+    return device.master_id
+
 
 @app.route("/")
 def home_page():
@@ -278,7 +287,7 @@ def user_add_meds():
 
         if not user:
             return redirect("/signout")
-        
+
         slave_id = int(request.form.get("slave_id"))
         slave_id = str(hex(slave_id)[2:])
         patient = request.form.get("patient")
