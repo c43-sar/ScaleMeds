@@ -79,6 +79,8 @@ def get_user(session=None):
         )
         user_id = user_token["user_id"]
         user = User.query.filter_by(user_id=user_id).first()
+        if not user:
+            return True
         return user
     except:
         return False
@@ -88,6 +90,8 @@ def get_user_id(session=None):
     x = get_user(session=session)
     if not x:
         return None
+    if x == True:
+        return True
     return x.user_id
 
 
@@ -231,37 +235,22 @@ def dev_reg_page():
 
 @app.route("/device_reg_update")
 def dev_reg():
-    if not session.get("auth_token"):
-        return redirect("/")
-    user_token = session.get("auth_token")
-    try:
-        user_token = jwt.decode(
-            user_token,
-            app.config["SECRET_KEY"],
-            options={"require": ["exp"]},
-            algorithms=["HS256"],
-        )
-        user_id = user_token["user_id"]
-        user = User.query.filter_by(user_id=user_id).first()
+    user_id = get_user_id(session=session)
+    if user_id == True or not user_id:
+        return redirect("/signout")
 
-        if not user:
-            return redirect("/signout")
+    master_id = ""
+    for i in range(0, 8):
+        master_id += request.form.get(str("id_pt_" + str(i)))
 
-        master_id = ""
-        for i in range(0, 8):
-            master_id += request.form.get(str("id_pt_" + str(i)))
-
-        existing_device = Device.query.filter_by(user_id=user_id)
-        if not existing_device:
-            new_device = Device(user_id=user_id, master_id=master_id)
-            db.session.add(new_device)
-            return redirect("/dash")
-
-        existing_device.master_id = master_id
+    existing_device = Device.query.filter_by(user_id=user_id)
+    if not existing_device:
+        new_device = Device(user_id=user_id, master_id=master_id)
+        db.session.add(new_device)
         return redirect("/dash")
 
-    except:
-        return redirect("/signout")
+    existing_device.master_id = master_id
+    return redirect("/dash")
 
 
 @app.route("/addmeds")
