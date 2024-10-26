@@ -203,8 +203,9 @@ def user_dash():
 
     print(Device.query.all())
     device = Device.query.filter_by(user_id=user.user_id).first()
-    print(device)
-    if not device or not user.is_admin:
+    db.session.refresh(device)
+    # print(device)
+    if not device and (user.is_admin == False):
         return redirect("/register_device")
     print(Meds.query.all())
     return render_template(
@@ -229,24 +230,24 @@ def dev_reg():
     master_id = ""
     for i in range(0, 8):
         master_id += request.form.get(str("id_pt_" + str(i)))
-    print(master_id)
+    # print(master_id)
 
-    existing_device = Device.query.filter_by(user_id=user_id)
+    existing_device = Device.query.filter_by(user_id=user_id).first()
     if not existing_device:
         new_device = Device(
             user_id=user_id,
             master_id=master_id,
         )
-        print(new_device)
+        # print("new device:", new_device)
         db.session.add(new_device)
         # db.session.flush()
         db.session.commit()
-        print(Device.query.all())
+        # print(Device.query.all())
         return redirect("/dashboard")
 
     existing_device.master_id = master_id
     db.session.commit()
-    print(Device.query.all())
+    # print(Device.query.all())
     return redirect("/dashboard")
 
 
@@ -268,7 +269,7 @@ def user_add_meds():
     time_mins = int(request.form.get("time_mins"))
 
     try:
-        device = Device.query.filter_by(user_id=user_id)
+        device = Device.query.filter_by(user_id=user_id).first()
         master_id = device.master_id
 
         med = Meds(
