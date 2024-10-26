@@ -49,9 +49,7 @@ class Meds(db.Model):
     __tablename__ = "meds"
     meds_id = db.Column(db.Integer, primary_key=True)
     # users_id = db.Column(db.String(36), db.ForeignKey("users.user_id"))
-    master_id = db.Column(
-        db.String(64), db.ForeignKey("devices.master_id"), unique=True
-    )
+    master_id = db.Column(db.String(64))
     patient_name = db.Column(db.String(64))
     slave_id = db.Column(db.String(2))
     pill_select = db.Column(db.Integer)
@@ -62,7 +60,7 @@ class Meds(db.Model):
 class Device(db.Model):
     __tablename__ = "devices"
     dev_no = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(36), db.ForeignKey("users.user_id"), unique=True)
+    user_id = db.Column(db.String(36), unique=True)
     master_id = db.Column(db.String(64), unique=True)
 
 
@@ -203,12 +201,17 @@ def user_dash():
     if user == True or not user:
         return redirect("/signout")
 
+    print(Device.query.all())
     device = Device.query.filter_by(user_id=user.user_id).first()
-    if not device or user.is_admin == False:
+    print(device)
+    if not device or not user.is_admin:
         return redirect("/register_device")
     print(Meds.query.all())
     return render_template(
-        "dash.html", user_full_name=user.full_name, n=len(Meds.query.all()), meds_list=Meds.query.all()
+        "dash.html",
+        user_full_name=user.full_name,
+        n=len(Meds.query.all()),
+        meds_list=Meds.query.all(),
     )
 
 
@@ -226,15 +229,24 @@ def dev_reg():
     master_id = ""
     for i in range(0, 8):
         master_id += request.form.get(str("id_pt_" + str(i)))
+    print(master_id)
 
     existing_device = Device.query.filter_by(user_id=user_id)
     if not existing_device:
-        new_device = Device(user_id=user_id, master_id=master_id)
+        new_device = Device(
+            user_id=user_id,
+            master_id=master_id,
+        )
+        print(new_device)
         db.session.add(new_device)
+        # db.session.flush()
         db.session.commit()
+        print(Device.query.all())
         return redirect("/dashboard")
 
     existing_device.master_id = master_id
+    db.session.commit()
+    print(Device.query.all())
     return redirect("/dashboard")
 
 
