@@ -260,30 +260,17 @@ def user_add_meds_page():
 
 @app.route("/submitmeds")
 def user_add_meds():
-    if not session.get("auth_token"):
-        return redirect("/")
-    user_token = session.get("auth_token")
+    user_id = get_user_id(session=session)
+    if user_id == True or not user_id:
+        return redirect("/signout")
+    slave_id = int(request.form.get("slave_id"))
+    slave_id = str(hex(slave_id)[2:])
+    patient = request.form.get("patient")
+    pill_select = int(request.form.get("pill_select"))
+    time_hrs = int(request.form.get("time_hrs"))
+    time_mins = int(request.form.get("time_mins"))
 
     try:
-        user_token = jwt.decode(
-            user_token,
-            app.config["SECRET_KEY"],
-            options={"require": ["exp"]},
-            algorithms=["HS256"],
-        )
-        user_id = user_token["user_id"]
-        user = User.query.filter_by(user_id=user_id).first()
-
-        if not user:
-            return redirect("/signout")
-
-        slave_id = int(request.form.get("slave_id"))
-        slave_id = str(hex(slave_id)[2:])
-        patient = request.form.get("patient")
-        pill_select = int(request.form.get("pill_select"))
-        time_hrs = int(request.form.get("time_hrs"))
-        time_mins = int(request.form.get("time_mins"))
-
         device = Device.query.filter_by(user_id=user_id)
         master_id = device.master_id
 
@@ -300,7 +287,7 @@ def user_add_meds():
         db.session.commit()
         return redirect("/dash")
     except:
-        return "Failed to add"
+        return "Failed to add medication"
 
 
 if __name__ == "__main__":
