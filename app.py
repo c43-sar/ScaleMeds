@@ -253,7 +253,11 @@ def dev_reg():
 
 @app.route("/addmeds")
 def user_add_meds_page():
-    return render_template("addmeds.html", master_id="Under Constuction")
+    master_id = get_master_id(session=session)
+    if not master_id or master_id == True:
+        return redirect("/signout")
+    master_id = "-".join(re.findall("."*8, master_id))
+    return render_template("addmeds.html", master_id=master_id)
 
 
 @app.route("/submitmeds", methods=["POST"])
