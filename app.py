@@ -10,7 +10,7 @@ from flask import (
 from flask_session import Session
 import hashlib as hl
 import json, uuid, re
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import *
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -201,13 +201,13 @@ def user_dash():
     if user == True or not user:
         return redirect("/signout")
 
-    print(Device.query.all())
+    # print(Device.query.all())
     device = Device.query.filter_by(user_id=user.user_id).first()
     db.session.refresh(device)
     # print(device)
     if not device and (user.is_admin == False):
         return redirect("/register_device")
-    print(Meds.query.all())
+    # print(Meds.query.all())
     return render_template(
         "dash.html",
         user_full_name=user.full_name,
@@ -287,7 +287,7 @@ def user_add_meds():
 
         db.session.add(med)
         db.session.commit()
-        return redirect("/dash")
+        return redirect("/dashboard")
     except:
         return "Failed to add medication"
 

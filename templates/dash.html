@@ -12,7 +12,7 @@
         <h3>List of meds</h3>
         <form action="/editmeds" method="post">
             {% for i in range(n)%}
-              <input type="radio" />{meds_list[i]} <br />
+              <input type="radio" />{{meds_list[i]}} <br />
             {% endfor %}
             <button type="submit">Edit</button>
         </form>
