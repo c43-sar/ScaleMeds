@@ -204,7 +204,7 @@ def user_dash():
         return redirect("/signout")
 
     device = Device.query.filter_by(user_id=user.user_id).first()
-    if not device and user.is_admin == False:
+    if not device or user.is_admin == False:
         return redirect("/register_device")
     print(Meds.query.all())
     return render_template(
