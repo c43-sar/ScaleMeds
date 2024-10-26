@@ -107,7 +107,7 @@ def get_master_id(session=None):
 
 @app.route("/")
 def home_page():
-    if len(User.all()) == 0:
+    if len(User.query.all()) == 0:
         return redirect("/register")
     if session.get("auth_token"):
         return redirect("/dashboard")
@@ -137,7 +137,7 @@ def signup():
     data = request.form
     name, uname = data.get("name"), data.get("uname")
     pwd = data.get("pwd")
-    regex_obj = re.compile("[a-z0-9]{5,15}")
+    regex_obj = re.compile("[a-z0-9._]{5,15}")
     regex_res = regex_obj.fullmatch(uname)
 
     if not regex_res or len(pwd) < 8:
@@ -206,9 +206,9 @@ def user_dash():
     device = Device.query.filter_by(user_id=user.user_id).first()
     if not device and user.is_admin == False:
         return redirect("/register_device")
-
+    print(Meds.query.all())
     return render_template(
-        "dash.html", user_full_name=user.full_name, meds_list=Meds.all()
+        "dash.html", user_full_name=user.full_name, n=len(Meds.query.all()), meds_list=Meds.query.all()
     )
 
 
@@ -217,7 +217,7 @@ def dev_reg_page():
     return render_template("newdevice.html")
 
 
-@app.route("/device_reg_update")
+@app.route("/device_reg_update", methods=["POST"])
 def dev_reg():
     user_id = get_user_id(session=session)
     if user_id == True or not user_id:
@@ -231,18 +231,18 @@ def dev_reg():
     if not existing_device:
         new_device = Device(user_id=user_id, master_id=master_id)
         db.session.add(new_device)
-        return redirect("/dash")
+        return redirect("/dashboard")
 
     existing_device.master_id = master_id
-    return redirect("/dash")
+    return redirect("/dashboard")
 
 
 @app.route("/addmeds")
 def user_add_meds_page():
-    render_template("addmeds.html", master_id="Under Constuction")
+    return render_template("addmeds.html", master_id="Under Constuction")
 
 
-@app.route("/submitmeds")
+@app.route("/submitmeds", methods=["POST"])
 def user_add_meds():
     user_id = get_user_id(session=session)
     if user_id == True or not user_id:
