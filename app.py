@@ -231,6 +231,7 @@ def dev_reg():
     if not existing_device:
         new_device = Device(user_id=user_id, master_id=master_id)
         db.session.add(new_device)
+        db.session.commit()
         return redirect("/dashboard")
 
     existing_device.master_id = master_id
