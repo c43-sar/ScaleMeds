@@ -199,33 +199,17 @@ def user_auth():
 
 @app.route("/dashboard")
 def user_dash():
-    if not session.get("auth_token"):
-        return redirect("/")
-    user_token = session.get("auth_token")
-    try:
-        user_token = jwt.decode(
-            user_token,
-            app.config["SECRET_KEY"],
-            options={"require": ["exp"]},
-            algorithms=["HS256"],
-        )
-        user_id = user_token["user_id"]
-        user = User.query.filter_by(user_id=user_id).first()
-        print(Meds.all())
-
-        if not user:
-            return redirect("/signout")
-
-        device = Device.query.filter_by(user_id=user_id).first()
-        if not device and user.is_admin == False:
-            return redirect("/register_device")
-
-        return render_template(
-            "dash.html", user_full_name=user.full_name, meds_list=Meds.all()
-        )
-
-    except:
+    user = get_user(session=session)
+    if user == True or not user:
         return redirect("/signout")
+
+    device = Device.query.filter_by(user_id=user.user_id).first()
+    if not device and user.is_admin == False:
+        return redirect("/register_device")
+
+    return render_template(
+        "dash.html", user_full_name=user.full_name, meds_list=Meds.all()
+    )
 
 
 @app.route("/register_device")
