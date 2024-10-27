@@ -76,7 +76,8 @@ def get_user(session=None):
             algorithms=["HS256"],
         )
         user_id = user_token["user_id"]
-        user = User.query.filter_by(user_id=user_id).first()
+        # print(db.session.execute(db.select(User).filter_by(user_id=user_id)).scalar())
+        user = db.session.execute(db.select(User).filter_by(user_id=user_id)).scalar()
         if not user:
             return True
         return user
@@ -97,7 +98,7 @@ def get_master_id(session=None):
     user_id = get_user_id(session=session)
     if not user_id:
         return None
-    device = Device.query.filter_by(user_id=user_id).first()
+    device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
     if not device:
         return True
     return device.master_id
@@ -105,7 +106,8 @@ def get_master_id(session=None):
 
 @app.route("/")
 def home_page():
-    if len(User.query.all()) == 0:
+    # print(db.session.execute(db.select(User)).scalars().all())
+    if len(db.session.execute(db.select(User)).scalars().all()) == 0:
         return redirect("/register")
     if session.get("auth_token"):
         return redirect("/dashboard")
@@ -145,11 +147,11 @@ def signup():
         )
 
     admin_reqd = False
-    admins = User.query.filter_by(is_admin=True).first()
+    admins = db.session.execute(db.select(User).filter_by(is_admin=True)).scalar()
     if not admins:
         admin_reqd = True
 
-    user = User.query.filter_by(user_name=uname).first()
+    user = db.session.execute(db.select(User).filter_by(user_name=uname)).scalar()
     if not user:
         user = User(
             user_id=str(uuid.uuid4()),
@@ -174,7 +176,7 @@ def signup():
 def user_auth():
     uname = str(request.form["uname"])
     pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
-    user = User.query.filter_by(user_name=uname).first()
+    user = db.session.execute(db.select(User).filter_by(user_name=uname)).scalar()
     if not user:
         return render_template(
             "index.html", message="Wrong username or user does not exist."
@@ -202,7 +204,7 @@ def user_dash():
         return redirect("/signout")
 
     # print(Device.query.all())
-    device = Device.query.filter_by(user_id=user.user_id).first()
+    device = db.session.execute(db.select(Device).filter_by(user_id=user.user_id)).scalar()
     db.session.refresh(device)
     # print(device)
     if not device and (user.is_admin == False):
@@ -211,8 +213,8 @@ def user_dash():
     return render_template(
         "dash.html",
         user_full_name=user.full_name,
-        n=len(Meds.query.all()),
-        meds_list=Meds.query.all(),
+        n=len(db.session.execute(db.select(Meds)).scalars().all()),
+        meds_list=db.session.execute(db.select(Meds)).scalars().all(),
     )
 
 
@@ -232,7 +234,7 @@ def dev_reg():
         master_id += request.form.get(str("id_pt_" + str(i)))
     # print(master_id)
 
-    existing_device = Device.query.filter_by(user_id=user_id).first()
+    existing_device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
     if not existing_device:
         new_device = Device(
             user_id=user_id,
@@ -273,7 +275,7 @@ def user_add_meds():
     time_mins = int(request.form.get("time_mins"))
 
     try:
-        device = Device.query.filter_by(user_id=user_id).first()
+        device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
         master_id = device.master_id
 
         med = Meds(
