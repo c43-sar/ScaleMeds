@@ -103,6 +103,15 @@ def get_master_id(session=None):
         return True
     return device.master_id
 
+def get_master_id_pretty(session=None):
+    user_id = get_user_id(session=session)
+    if not user_id:
+        return None
+    device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
+    if not device:
+        return True
+    master_id = device.master_id
+    return str("-".join(re.findall("." * 8, master_id)))
 
 @app.route("/")
 def home_page():
@@ -204,7 +213,9 @@ def user_dash():
         return redirect("/signout")
 
     # print(Device.query.all())
-    device = db.session.execute(db.select(Device).filter_by(user_id=user.user_id)).scalar()
+    device = db.session.execute(
+        db.select(Device).filter_by(user_id=user.user_id)
+    ).scalar()
     db.session.refresh(device)
     # print(device)
     if not device and (user.is_admin == False):
@@ -214,7 +225,9 @@ def user_dash():
         "dash.html",
         user_full_name=user.full_name,
         n=len(db.session.execute(db.select(Meds)).scalars().all()),
-        meds_list=db.session.execute(db.select(Meds)).scalars().all(),
+        meds_list=db.session.execute(
+            db.select(Meds.patient_name, Meds.pill_select)
+        ).all(),
     )
 
 
@@ -234,7 +247,9 @@ def dev_reg():
         master_id += request.form.get(str("id_pt_" + str(i)))
     # print(master_id)
 
-    existing_device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
+    existing_device = db.session.execute(
+        db.select(Device).filter_by(user_id=user_id)
+    ).scalar()
     if not existing_device:
         new_device = Device(
             user_id=user_id,
@@ -258,7 +273,7 @@ def user_add_meds_page():
     master_id = get_master_id(session=session)
     if not master_id or master_id == True:
         return redirect("/signout")
-    master_id = "-".join(re.findall("."*8, master_id))
+    master_id = "-".join(re.findall("." * 8, master_id))
     return render_template("addmeds.html", master_id=master_id)
 
 
@@ -275,7 +290,9 @@ def user_add_meds():
     time_mins = int(request.form.get("time_mins"))
 
     try:
-        device = db.session.execute(db.select(Device).filter_by(user_id=user_id)).scalar()
+        device = db.session.execute(
+            db.select(Device).filter_by(user_id=user_id)
+        ).scalar()
         master_id = device.master_id
 
         med = Meds(
