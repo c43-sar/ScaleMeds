@@ -20,6 +20,7 @@ with open(".sensitive/dbconfig.json", "r") as file:
     db_data = json.load(file)
 
 app = Flask(__name__)
+app._static_folder = './static'
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app=app)
@@ -130,13 +131,13 @@ def home_page():
         return redirect("/register")
     if session.get("auth_token"):
         return redirect("/dashboard")
-    return render_template("index.html", message="")
+    return render_template("login.html", message="")
 
 
 @app.route("/login")
 def user_signin():
     return render_template(
-        "index.html", message="You have been logged out. Please login to use the app."
+        "login.html", message="You have been logged out. Please login to use the app."
     )
 
 
@@ -183,22 +184,28 @@ def signup():
         db.session.add(user)
         db.session.commit()
         return render_template(
-            "index.html", message="Account created successfully. Please Log in."
+            "login.html", message="Account created successfully. Please Log in."
         )
     else:
         return render_template(
-            "index.html", message="User already exists. Please Log in."
+            "login.html", message="User already exists. Please Log in."
         )
 
 
 @app.route("/authorise", methods=["POST"])
 def user_auth():
-    uname = str(request.form["uname"])
-    pwd_hash = hl.sha512(str(request.form["pwd"]).encode()).hexdigest()
+    # Debug statements
+    print("Form data:", request.form.to_dict())
+    if "username" not in request.form or "password" not in request.form.to_dict():
+        return "Bad Request: Missing form data", 400
+
+    uname = str(request.form.to_dict()["username"])
+    pwd_hash = hl.sha512(str(request.form.to_dict()["password"]).encode()).hexdigest()
+
     user = db.session.execute(db.select(User).filter_by(user_name=uname)).scalar()
     if not user:
         return render_template(
-            "index.html", message="Wrong username or user does not exist."
+            "login.html", message="Wrong username or user does not exist."
         )
     if user.password == pwd_hash:
         auth_token = jwt.encode(
@@ -212,8 +219,9 @@ def user_auth():
         session["auth_token"] = auth_token
         return redirect("/dashboard")
     return render_template(
-        "index.html", message="Wrong username and password combination."
+        "login.html", message="Wrong username and password combination."
     )
+
 
 
 @app.route("/dashboard")
@@ -321,6 +329,17 @@ def user_add_meds():
         return "Failed to add medication"
 
 
+@app.route('/delete_med/<int:meds_id>', methods=['POST'])
+def delete_meds(meds_id):
+    med = Meds.query.get(meds_id)
+    if med:
+        db.session.delete(med)
+        db.session.commit()
+        return redirect('/home')
+    else:
+        return redirect('/home')
+
+
 # UNDER CONSTRUCTION
 
 
@@ -339,7 +358,7 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        user_name=user.user_name,
+        user_name=user.full_name,
         missed_doses=missed_doses,
         meds=medications,
     )

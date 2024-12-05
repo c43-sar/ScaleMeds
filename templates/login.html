@@ -34,7 +34,7 @@
                 <div class="card shadow-lg">
                     <div class="card-body">
                         <div class="logo">OpenPDS</div>
-                        <h1 class="h3 mb-3 font-weight-normal">Please Sign In</h1>
+                        <h1 class="h3 mb-3 font-weight-normal">{{ message }}</h1>
                         <form class="form-signin" action="/authorise" method="post">
                             <div class="form-group">
                                 <label for="inputUsername" class="sr-only">Username</label>
@@ -54,7 +54,7 @@
                                     <input type="password" id="inputPassword" name="password" class="form-control" placeholder="Password" required>
                                 </div>
                             </div>
-                            <div class="h-captcha" data-sitekey="your-hcaptcha-site-key"></div>
+                            <!-- <div class="h-captcha" data-sitekey="your-hcaptcha-site-key"></div> -->
                             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
                         </form>
                     </div>
