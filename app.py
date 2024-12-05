@@ -145,6 +145,9 @@ def user_signin():
 def reg_user():
     return render_template("register.html")
 
+@app.route("/logout")
+def user_logout():
+    return redirect("/signout")
 
 @app.route("/signout")
 def user_session_delete():
