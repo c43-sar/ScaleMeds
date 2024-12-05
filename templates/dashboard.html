@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="/static/css/common.css" rel="stylesheet" />
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const prefersDarkScheme = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const mode = prefersDarkScheme ? "dark-mode" : "light-mode";
+        document.body.classList.add(mode);
+      });
+
+      function refreshPage() {
+        window.location.reload();
+      }
+      setInterval(refreshPage, 300000); // Refresh every 5 minutes
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg">
+      <a class="navbar-brand" href="#">Welcome, {{ user_name }}</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/profile_settings"
+              ><i class="fas fa-user-cog"></i> Profile Settings</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/about"
+              ><i class="fas fa-info-circle"></i> About</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout"
+              ><i class="fas fa-sign-out-alt"></i> Sign Out</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <div class="card shadow-lg">
+            <div class="card-body">
+              <h5 class="card-title">Missed Doses</h5>
+              <div class="table-responsive scrollable">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Medication ID</th>
+                      <th>Patient Name</th>
+                      <th>Dispenser ID</th>
+                      <th>Time (Hours)</th>
+                      <th>Time (Minutes)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for miss in missed_doses %}
+                    <tr>
+                      <td>{{ miss.meds_id }}</td>
+                      <td>{{ miss.patient_name }}</td>
+                      <td>{{ miss.slave_id }}</td>
+                      <td>{{ miss.time_hours }}</td>
+                      <td>{{ miss.time_mins }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="card shadow-lg">
+            <div class="card-body">
+              <h5 class="card-title">Medications</h5>
+              <a href="/add_meds" class="btn btn-success mb-3"
+                ><i class="fas fa-plus-circle"></i> Add Medication</a
+              >
+              <div class="table-responsive scrollable">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Medication ID</th>
+                      <th>Master ID</th>
+                      <th>Patient Name</th>
+                      <th>Dispenser ID</th>
+                      <th>Pill Selection</th>
+                      <th>Time (Hours)</th>
+                      <th>Time (Minutes)</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for med in meds %}
+                    <tr>
+                      <td>{{ med.meds_id }}</td>
+                      <td>{{ med.master_id }}</td>
+                      <td>{{ med.patient_name }}</td>
+                      <td>{{ med.slave_id }}</td>
+                      <td>{{ med.pill_select }}</td>
+                      <td>{{ med.time_hours }}</td>
+                      <td>{{ med.time_mins }}</td>
+                      <td>
+                        <a
+                          href="/edit_med/{{ med.meds_id }}"
+                          class="btn btn-warning"
+                          ><i class="fas fa-edit"></i> Edit</a
+                        >
+                        <form
+                          action="/delete_med/{{ med.meds_id }}"
+                          method="post"
+                          style="display: inline"
+                          onsubmit="return confirm('Are you sure you want to delete this medication?');"
+                        >
+                          <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Delete
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

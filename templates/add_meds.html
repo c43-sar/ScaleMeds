@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Add Medication{% endblock %}
+
+{% block header %}Add Medication{% endblock %}
+
+{% block content %}
+<form class="form" action="/add_meds" method="post">
+    <div class="form-group">
+        <label for="master_id">Master ID</label>
+        <input type="text" id="master_id" name="master_id" class="form-control" value="{{ get_master_id_pretty(session) }}" readonly>
+    </div>
+    <div class="form-group">
+        <label for="patient_name">Patient Name</label>
+        <input type="text" id="patient_name" name="patient_name" class="form-control" maxlength="64" required>
+    </div>
+    <div class="form-group">
+        <label for="slave_id">Dispenser ID</label>
+        <input type="number" id="slave_id" name="slave_id" class="form-control" min="1" max="127" required>
+    </div>
+    <div class="form-group">
+        <label for="pill_select">Pill Selection</label>
+        <select id="pill_select" name="pill_select" class="form-control" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="time_hours">Time (Hours)</label>
+        <select id="time_hours" name="time_hours" class="form-control" required>
+            {% for hour in range(0, 24) %}
+            <option value="{{ hour }}">{{ hour }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="time_mins">Time (Minutes)</label>
+        <select id="time_mins" name="time_mins" class="form-control" required>
+            {% for minute in range(0, 60, 5) %}
+            <option value="{{ minute }}">{{ minute }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button class="btn btn-lg btn-primary btn-block" type="submit">
+        <i class="fas fa-plus-circle"></i> Add Medication
+    </button>
+</form>
+{% endblock %}

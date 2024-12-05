@@ -64,6 +64,14 @@ class Device(db.Model):
     master_id = db.Column(db.String(64), unique=True)
 
 
+# ACK
+class Ack(db.Model):
+    __tablename__ = "ack"
+    id = db.Column(db.Integer, primary_key=True)
+    meds_id = db.Column(db.Integer, db.ForeignKey("meds.meds_id"))
+    dose_taken = db.Column(db.Boolean, unique=False)
+
+
 def get_user(session=None):
     if not session or not session.get("auth_token"):
         return False
@@ -103,6 +111,7 @@ def get_master_id(session=None):
         return True
     return device.master_id
 
+
 def get_master_id_pretty(session=None):
     user_id = get_user_id(session=session)
     if not user_id:
@@ -112,6 +121,7 @@ def get_master_id_pretty(session=None):
         return True
     master_id = device.master_id
     return str("-".join(re.findall("." * 8, master_id)))
+
 
 @app.route("/")
 def home_page():
@@ -309,6 +319,126 @@ def user_add_meds():
         return redirect("/dashboard")
     except:
         return "Failed to add medication"
+
+
+# UNDER CONSTRUCTION
+
+
+@app.route("/home")
+def dashboard():
+    user = get_user(session)
+    master_id = get_master_id(session)
+
+    missed_doses = (
+        Meds.query.join(Ack, Meds.meds_id == Ack.meds_id)
+        .filter(Ack.dose_taken == False, Meds.master_id == master_id)
+        .all()
+    )
+
+    medications = Meds.query.filter_by(master_id=master_id).all()
+
+    return render_template(
+        "dashboard.html",
+        user_name=user.user_name,
+        missed_doses=missed_doses,
+        meds=medications,
+    )
+
+
+@app.route("/api/get_medications", methods=["POST"])
+def get_medications():
+    data = request.get_json()
+    master_id = data.get("master_id")
+
+    if not master_id:
+        return jsonify({"error": "master_id is required"}), 400
+
+    medications = Meds.query.filter_by(master_id=master_id).all()
+
+    if not medications:
+        return jsonify({"error": "No medications found for the given master_id"}), 404
+
+    meds_list = [
+        {
+            "meds_id": med.meds_id,
+            "slave_id": med.slave_id,
+            "pill_select": med.pill_select,
+            "time_hours": med.time_hours,
+            "time_mins": med.time_mins,
+        }
+        for med in medications
+    ]
+
+    return jsonify(meds_list), 200
+
+
+@app.route("/api/acknowledge", methods=["POST"])
+def acknowledge():
+    data = request.get_json()
+    meds_id = data.get("meds_id")
+    dose_taken = data.get("dose_taken")
+
+    if meds_id is None or dose_taken is None:
+        return jsonify({"error": "meds_id and dose_taken are required"}), 400
+
+    ack = Ack(meds_id=meds_id, dose_taken=dose_taken)
+    db.session.add(ack)
+    db.session.commit()
+
+    return jsonify({"message": "Acknowledgement recorded"}), 200
+
+
+@app.route("/add_meds", methods=["GET", "POST"])
+def add_meds():
+    if request.method == "POST":
+        master_id = get_master_id(session)
+        patient_name = request.form["patient_name"]
+        slave_id = request.form["slave_id"]
+        pill_select = request.form["pill_select"]
+        time_hours = request.form["time_hours"]
+        time_mins = request.form["time_mins"]
+
+        # Convert slave_id to hex and remove '0x'
+        slave_id_hex = hex(int(slave_id))[2:]
+
+        med = Meds(
+            master_id=master_id,
+            patient_name=patient_name,
+            slave_id=slave_id_hex,
+            pill_select=pill_select,
+            time_hours=time_hours,
+            time_mins=time_mins,
+        )
+
+        db.session.add(med)
+        db.session.commit()
+
+        return redirect("/home")
+
+    return render_template("add_meds.html", get_master_id_pretty=get_master_id_pretty)
+
+
+@app.route("/edit_meds/<int:meds_id>", methods=["GET", "POST"])
+def edit_meds(meds_id):
+    med = Meds.query.get(meds_id)
+
+    if request.method == "POST":
+        med.patient_name = request.form["patient_name"]
+        slave_id = request.form["slave_id"]
+        med.pill_select = request.form["pill_select"]
+        med.time_hours = request.form["time_hours"]
+        med.time_mins = request.form["time_mins"]
+
+        # Convert slave_id to hex and remove '0x'
+        med.slave_id = hex(int(slave_id))[2:]
+
+        db.session.commit()
+
+        return redirect("/home")
+
+    return render_template(
+        "edit_meds.html", med=med, get_master_id_pretty=get_master_id_pretty
+    )
 
 
 if __name__ == "__main__":

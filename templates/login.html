@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const mode = prefersDarkScheme ? 'dark-mode' : 'light-mode';
+            document.body.classList.add(mode);
+            
+            const cookieNotice = document.getElementById('cookie-notice');
+            const acceptButton = document.getElementById('accept-cookies');
+            
+            if (!localStorage.getItem('cookiesAccepted')) {
+                cookieNotice.style.display = 'block';
+            }
+            
+            acceptButton.onclick = () => {
+                localStorage.setItem('cookiesAccepted', 'true');
+                cookieNotice.style.display = 'none';
+            };
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-body">
+                        <div class="logo">OpenPDS</div>
+                        <h1 class="h3 mb-3 font-weight-normal">Please Sign In</h1>
+                        <form class="form-signin" action="/authorise" method="post">
+                            <div class="form-group">
+                                <label for="inputUsername" class="sr-only">Username</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    </div>
+                                    <input type="text" id="inputUsername" name="username" class="form-control" placeholder="Username" required autofocus>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputPassword" class="sr-only">Password</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    </div>
+                                    <input type="password" id="inputPassword" name="password" class="form-control" placeholder="Password" required>
+                                </div>
+                            </div>
+                            <div class="h-captcha" data-sitekey="your-hcaptcha-site-key"></div>
+                            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="cookie-notice" class="cookie-notice" style="display: none;">
+        This site uses only essential cookies for authorization and CAPTCHA. We do not collect any analytics data. 
+        <button id="accept-cookies" class="btn btn-warning btn-sm">Accept</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
