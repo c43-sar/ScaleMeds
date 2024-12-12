@@ -130,7 +130,7 @@ def home_page():
     if len(db.session.execute(db.select(User)).scalars().all()) == 0:
         return redirect("/register")
     if session.get("auth_token"):
-        return redirect("/dashboard")
+        return redirect("/home")
     return render_template("login.html", message="")
 
 
@@ -198,7 +198,7 @@ def signup():
 @app.route("/authorise", methods=["POST"])
 def user_auth():
     # Debug statements
-    print("Form data:", request.form.to_dict())
+    # print("Form data:", request.form.to_dict())
     if "username" not in request.form or "password" not in request.form.to_dict():
         return "Bad Request: Missing form data", 400
 
@@ -220,7 +220,7 @@ def user_auth():
             algorithm="HS256",
         )
         session["auth_token"] = auth_token
-        return redirect("/dashboard")
+        return redirect("/home")
     return render_template(
         "login.html", message="Wrong username and password combination."
     )
@@ -348,9 +348,25 @@ def delete_meds(meds_id):
 
 @app.route("/home")
 def dashboard():
-    user = get_user(session)
-    master_id = get_master_id(session)
+######################
+    user = get_user(session=session)
+    if user == True or not user:
+        return redirect("/signout")
 
+    master_id = get_master_id(session)
+    if not master_id:
+        return redirect("/signout")
+    if (type(master_id) == bool)  and user.is_admin == False:
+        return redirect("/register_device")
+    # device = db.session.execute(
+    #     db.select(Device).filter_by(user_id=user.user_id)
+    # ).scalar()
+    # db.session.refresh(device)
+    # print(device)
+    # if not device and (user.is_admin == False):
+    #     return redirect("/register_device")
+    # master_id = get_master_id(session)
+#####################
     missed_doses = (
         Meds.query.join(Ack, Meds.meds_id == Ack.meds_id)
         .filter(Ack.dose_taken == False, Meds.master_id == master_id)
